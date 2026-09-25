@@ -1,0 +1,17 @@
+# Build output
+target/
+
+# Portable toolchain (JDK + Maven), downloaded by setup
+tools/
+
+# Local application data (never commit user notes)
+*.db
+*.db-wal
+*.db-shm
+data/
+backups/
+
+# IDE files
+.idea/
+*.iml
+.vscode/
