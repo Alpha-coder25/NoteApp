@@ -54,6 +54,7 @@ public class NoteEditor {
     private final Button deleteButton = new Button("\u2715 Delete");
 
     private NoteService noteService;
+    private com.example.noteapp.service.CategoryService categoryService;
     private Consumer<Void> onNotesChanged;
     private Consumer<String> onError;
     private IntSupplier delaySecondsSupplier = () -> 2;
@@ -66,6 +67,7 @@ public class NoteEditor {
     /** Wires services; called once by MainWindow before the editor is shown. */
     public void attach(NoteService noteService, com.example.noteapp.service.CategoryService categoryService) {
         this.noteService = noteService;
+        this.categoryService = categoryService;
         buildUi();
     }
 
@@ -125,6 +127,25 @@ public class NoteEditor {
         // Debounced auto-save: restart the timer on every edit.
         titleField.textProperty().addListener((obs, oldV, newV) -> scheduleAutosave());
         contentArea.textProperty().addListener((obs, oldV, newV) -> scheduleAutosave());
+        categoryBox.valueProperty().addListener((obs, oldV, newV) -> {
+            if (!loading) applySelectedCategory(newV);
+        });
+    }
+
+    /** Resolves the chosen category name to its id and marks the note dirty. */
+    private void applySelectedCategory(String name) {
+        if (currentNote == null) return;
+        try {
+            if (name == null || "Uncategorized".equals(name)) {
+                currentNote.setCategoryId(null);
+            } else if (categoryService != null) {
+                currentNote.setCategoryId(categoryService.findByName(name)
+                        .map(category -> category.getId()).orElse(null));
+            }
+            scheduleAutosave();
+        } catch (com.example.noteapp.exception.AppException e) {
+            if (onError != null) onError.accept("Could not change the category. Please try again.");
+        }
     }
 
     /**
@@ -140,8 +161,26 @@ public class NoteEditor {
         loading = true;
         titleField.setText(note.getTitle());
         contentArea.setText(note.getContent());
-        categoryBox.getItems().setAll("Uncategorized");
-        categoryBox.getSelectionModel().select(0);
+        categoryBox.getItems().clear();
+        categoryBox.getItems().add("Uncategorized");
+        try {
+            if (categoryService != null) {
+                for (com.example.noteapp.model.Category category : categoryService.list()) {
+                    categoryBox.getItems().add(category.getName());
+                }
+            }
+        } catch (com.example.noteapp.exception.AppException e) {
+            // Fall back to Uncategorized only; the sidebar still manages categories.
+        }
+        categoryBox.getSelectionModel().selectFirst();
+        if (note.getCategoryId() != null && categoryService != null) {
+            try {
+                categoryService.findById(note.getCategoryId())
+                        .ifPresent(category -> categoryBox.getSelectionModel().select(category.getName()));
+            } catch (com.example.noteapp.exception.AppException ignored) {
+                // leave the default selection
+            }
+        }
         tagChips.getChildren().clear();
         note.getTags().forEach(this::addChip);
         tagField.clear();

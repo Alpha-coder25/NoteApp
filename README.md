@@ -2,6 +2,8 @@
 
 A lightweight, professional **offline** note-taking desktop application for Windows, built with **Java 17+ / JavaFX / SQLite** and designed as a complete **Object-Oriented Programming (OOP)** project: encapsulation, abstraction, inheritance, polymorphism, interfaces, composition, exception handling, validation, file handling and database operations are all demonstrated with *genuinely useful* (not artificial) code.
 
+> 📖 **Just want to use the app?** Read the **[User Guide](docs/USER_GUIDE.md)** — a plain-language walkthrough of every feature, with screenshots-style layouts, backup/restore instructions and troubleshooting.
+
 The application runs completely offline. There is no backend server, cloud service, REST API, online account or synchronization. All data stays on the user's machine.
 
 ---
